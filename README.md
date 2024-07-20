@@ -30,8 +30,8 @@ Our `EulerFinanceExploitTrap` contract aims to detect a similar exploit by monit
 ### Setup
 
 1. Clone the repository:
-git clone https://github.com/asdspal/drosera-trap-examples.git
-cd drosera-trap-examples
+git clone https://github.com/asdspal/drosera-trap-examples.git  
+cd drosera-trap-examples  
 
 
 2. Install dependencies:
