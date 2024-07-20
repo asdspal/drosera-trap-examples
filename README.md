@@ -1,142 +1,81 @@
-# Table of Contents
+# Euler Finance Exploit Trap Example
 
-- [Drosera Trap Examples](#drosera-trap-examples)
-  - [High Level Overview](#high-level-overview)
-  - [Trap Simulation](#trap-simulation)
-  - [What is possible with Traps?](#what-is-possible-with-traps)
-    - [Detection of Incidents](#detection-of-incidents)
-    - [Incident Response](#incident-response)
-  - [How Can I Collaborate/Contribute?](#how-can-i-collaboratecontribute)
-    - [Cool Ideas](#cool-ideas)
+This project demonstrates a trap contract designed to detect a potential exploit similar to the one that affected Euler Finance in March 2023. The trap monitors the DAI balance of a specified address (representing the Euler Finance contract) and triggers an alert if the balance falls below a certain threshold.
 
-# Drosera Trap Examples
+## Background: Euler Finance Exploit
 
-This repository contains examples of [Drosera Traps](https://dev.drosera.io/) to be used as reference. Some traps are examples of how to protect certain types of protocols as well as traps that have been applied to previous exploits.
+On March 13, 2023, Euler Finance, a DeFi lending protocol, suffered a flash loan attack resulting in a loss of approximately \$197 million. The attacker exploited a vulnerability in Euler's liquidation logic, allowing them to drain funds from the protocol.
 
-## High Level Overview
+Key points of the exploit:
+1. The attacker used a flash loan to manipulate the protocol's liquidity.
+2. They exploited a flaw in the liquidation mechanism to borrow assets without proper collateralization.
+3. This resulted in a rapid and significant decrease in the protocol's token balances.
 
-The provided examples in this repository show how a trap can be structured to detect an incident using solidity. A trap simply indicates that an incident has occured via the `boolean` result from the Trap's `isValid` function.
+## Trap Contract Explanation
 
-- If isValid returns `true` then there are no incidents.
-- If isValid returns `false` then there is an incident.
+Our `EulerFinanceExploitTrap` contract aims to detect a similar exploit by monitoring the DAI balance of a specified address. Here's how it works:
 
-In order to provide additional context, its important understand how Drosera Traps are connected to the Drosera Protocol. The exact implementation details of the Drosera Protocol are not required to experiment with Trap creation.
+1. The contract stores the address of the monitored contract (simulating Euler Finance) and the DAI token contract.
+2. It defines a threshold (100 million DAI) below which an alert is triggered.
+3. The `isValid()` function checks if the DAI balance of the monitored address is below the threshold.
+4. If the balance drops below the threshold, it returns `true`, indicating a potential exploit.
 
-```mermaid
+## How to Use This Project
 
-stateDiagram-v2
+### Prerequisites
 
-    Trap --> DroseraProtocol
-    Operators --> DroseraProtocol
-    DroseraProtocol --> ResponseContract
+- [Foundry](https://book.getfoundry.sh/getting-started/installation.html)
+- Git
 
-    Note right of Trap: Created by a user/protocol
-    Note right of Operators: Run trap logic 24/7
-    Note left of DroseraProtocol: Manages traps and operators
-    Note right of ResponseContract: Specified by Trap creator and contains incident response function
-```
+### Setup
 
-Refer to [Trap Anatomy](https://dev.drosera.io/docs/traps/create-trap#trap-anatomy) for in-depth details of Trap architecture.
-
-## Trap Simulation
-
-Drosera node operators run Trap logic every block using an array of previous `collect` data.
-
-You can visualize this as the `isValid` function being called with data from previous blocks.
-
-This allows for:
-
-- 🚀 Easy trap logic simulation in a local dev environment.
-  - Leveraging foundry
-- ⚡ Quick testing of trap logic with different data sets.
-  - Running against mainnet/testnet forks
-- 🐸 Leveraging ethereum natively
-  - Solidity
-
-Example:
-A trap collects the balance of a user every block. The `isValid` function checks if the user's balance has decreased by 10% in the last block. `isValid` expects an array of balances from the last 2 blocks.
-
-        | block 1 | block 2 | block 3 | block 4 |
-        |---------|---------|---------|---------|
-        |   200   |   300   |   400   |   200   |
-        |   -     |    ✅    |   ✅    |   ❌    |
+1. Clone the repository:
+git clone https://github.com/asdspal/drosera-trap-examples.git
+cd drosera-trap-examples
 
 
-    "-" indicates that the trap does not have enough data to check for an incident.
+2. Install dependencies:
 
-    "✅" indicates that the trap has not detected an incident.
+forge install
 
-    "❌" indicates that the trap has detected an incident.
 
-## What is possible with Traps?
+### Contract Files
 
-As Drosera continues to grow, the team and developer community will collaborate on new logic, contracts, scripts, and libraries to be used in tandem with Drosera Traps. Expertise in Trap creation and Drosera automation will emerge as a new specialization where the community can come together to create new technologies enabled by Drosera.
+- `src/EulerFinanceExploitTrap.sol`: The main trap contract
+- `src/ITrap.sol`: Interface for the trap contract
+- `test/EulerFinanceExploitTrap.t.sol`: Test file for the trap contract
 
-### Detection of Incidents
+### Running Tests
 
-Drosera Trap's enable time-series analysis with on-chain data. This means historical data can be collected and analyzed using a smart contract.
+Execute the following command to run the tests:
 
-| Analysis Type                                    | Description                                                                                                                                                                                                                  |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Rate Of Change Analysis**                      | X% change in a value or values over Y blocks                                                                                                                                                                                 |
-| **Moving Average Analysis**                      | X% change from the running moving average                                                                                                                                                                                    |
-| **Frequency Analysis**                           | Detect # of blocks a counter was above or below a threshold <br> Detect if value was maintained, below, or above threshold over X continuous blocks                                                                          |
-| **Pattern Analysis**                             | Detect x=a (time 1) then x=b (time 2) then x=a (time 3) <br> Detect x=a when y=b                                                                                                                                             |
-| **Conditional Analysis**                         | Detect if x=a then detect A and execute B, elseif x=b then detect C and execute D <br> While x=a detect A and execute B                                                                                                      |
-| **Exponential Smoothing Analysis**               | Give more weight to recent observations, helps to see anomalies                                                                                                                                                              |
-| **Adjustable Threshold Rate Of Change Analysis** | Instead of fixed X%, you can adjust thresholds                                                                                                                                                                               |
-| **Anomaly Detection Analysis**                   | If a value is far from median it might be an anomaly                                                                                                                                                                         |
-| **Transaction Frequency Analysis**               | Could be tracked if contract has data points that track it                                                                                                                                                                   |
-| **Oracle Data Analysis**                         | Using oracle data sources (chainlink, etc) to detect scenarios                                                                                                                                                               |
-| **Protocol-Specific Data Analysis**              | Tracking vesting schedules (analysis on accounts holding) <br> Prominent account tracking <br> Liquidity analysis <br> Tracking debt-to-collateral ratio of accounts <br> Economic analysis <br> Address reputation tracking |
+forge test --match-contract EulerFinanceExploitTrap -vv
 
-### Incident Response
 
-This example repo currently doesnt cover examples/simulation of incident response, but it is important to note that the Drosera Protocol allows the user to specify a contract and a function to be called by the node operators when an incident is detected.
+This will run two tests:
+1. `testNoExploit`: Verifies that the trap doesn't trigger when the balance is above the threshold.
+2. `testExploitDetected`: Simulates an exploit by reducing the balance and checks if the trap detects it.
 
-The incident response functionality can be used for any smart contract function:
+## Potential Real-World Usage
 
-- Pausable Functionality
-- Transferring funds
-- Swapping funds
-- Upgrade Reverting
-- Message Bridging
-- Alerting
-- Off-chain systems pick up the on-chain alert and perform tasks:
-  - Zapier
-  - The Graph
-  - Etc
-- Blacklisting accounts
-- Action Routing
-- Action can be conditional based on configurations defined by the protocol
-- Chainlink function calls
-- Calling functionality on other protocols
+In a real-world scenario, this trap could be integrated into a protocol's risk management system:
 
-## How Can I Collaborate/Contribute?
+1. The trap would continuously monitor the balance of critical contracts.
+2. If the balance drops suddenly, it could trigger automated responses such as:
+   - Pausing the protocol
+   - Alerting the development team
+   - Initiating emergency procedures
 
-The best way to collaborate is to create new examples of traps that can be used as reference for the community. The Drosera team will review and provide feedback on the examples.
+The `ProtocolWithTrap` contract in `src/ProtocolWithTrap.sol` demonstrates a basic implementation of how a protocol could use this trap to automatically pause operations when an exploit is detected.
 
-The idea here is that a robust library of trap examples, logic, scripts, and tools will help anyone that wants to leverage key data selectors from a vast ocean of protocols. A developer may want to have a trap that leverages oracles, restaking, bridges, dexs, etc. The possibilities are endless.
+## Limitations and Considerations
 
-The process for contributing is as follows:
+- This is a simplified example and would need to be adapted for specific protocols.
+- The threshold and monitored metrics should be carefully chosen based on the protocol's normal operating parameters.
+- Additional checks and balances should be implemented to prevent false positives.
 
-- Fork this repository
-- Create a new branch
-- Add your trap example
-- Create a pull request
 
-### Cool Ideas
+## License
 
-- Create a Trap that performs:
-  - Analysis of oracle price data
-  - AVS slashing detection
-  - Restaking economic analysis
-  - Bridge monitoring
-  - Dex liquidity analysis
-- Create a Library for:
-  - Time series analysis
-  - Pattern matching
-  - Aggregating popular DEX data
-  - Aggregating popular Lending data
-- Create a Script for:
-  - Running operator simulation (forge script on loop)
+This project is licensed under the MIT License.
+
